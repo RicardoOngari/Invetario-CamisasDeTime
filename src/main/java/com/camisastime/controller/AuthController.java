@@ -1,59 +1,50 @@
 package com.camisastime.controller;
 
-import java.util.List;
-import java.util.Optional;
+import java.util.HashMap;
+import java.util.Map;
 
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.web.bind.annotation.CrossOrigin;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.security.authentication.AuthenticationManager;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
-import com.camisastime.dto.LoginRequest;
-import com.camisastime.dto.LoginResponse;
-import com.camisastime.dto.UsuarioRequest;
 import com.camisastime.model.Usuario;
+import com.camisastime.security.JwtUtil;
 import com.camisastime.service.UsuarioService;
 
 @RestController
-@RequestMapping("/api/auth")
-@CrossOrigin(origins = "*")
+@RequestMapping("/auth")
 public class AuthController {
 
     @Autowired
-    private UsuarioService service;
+    private AuthenticationManager authenticationManager;
+
+    @Autowired
+    private UsuarioService usuarioService;
+
+    @Autowired
+    private JwtUtil jwtUtil;
 
     @PostMapping("/login")
-    public LoginResponse login(@RequestBody LoginRequest request) {
-        return service.login(request);
+    public Map<String, String> login(@RequestBody Usuario usuario){
+        authenticationManager.authenticate(
+                new UsernamePasswordAuthenticationToken(
+                        usuario.getUsername(),
+                        usuario.getPassword()
+                )
+        );
+
+        String token = jwtUtil.generateToken(usuario.getUsername());
+        Map<String, String> response = new HashMap<>();
+        response.put("token", token);
+        return response;
     }
 
-    @PostMapping("/cadastrar")
-    public Usuario cadastrar(@RequestBody UsuarioRequest request) {
-        return service.criarUsuario(request);
-    }
-
-    @GetMapping("/usuarios")
-    public List<Usuario> listarUsuarios() {
-        return service.listar();
-    }
-
-    @GetMapping("/usuarios/{id}")
-    public Optional<Usuario> buscarUsuario(@PathVariable Long id) {
-        return service.buscarPorId(id);
-    }
-
-    @PutMapping("/usuarios/{id}/desativar")
-    public void desativarUsuario(@PathVariable Long id) {
-        service.desativar(id);
-    }
-
-    @PutMapping("/usuarios/{id}/alterar-senha")
-    public Usuario alterarSenha(@PathVariable Long id, @RequestBody String novaSenha) {
-        return service.alterarSenha(id, novaSenha);
+    @PostMapping("/register")
+    public Usuario register(@RequestBody Usuario usuario){
+        return usuarioService.salvar(usuario);
     }
 }
