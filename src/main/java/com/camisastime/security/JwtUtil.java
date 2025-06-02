@@ -2,15 +2,19 @@ package com.camisastime.security;
 
 import java.util.Date;
 
+import javax.crypto.SecretKey;
+
 import org.springframework.stereotype.Component;
 
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.SignatureAlgorithm;
+import io.jsonwebtoken.security.Keys;
 
 @Component
 public class JwtUtil {
-    private String secret = "minhaChaveSecreta123";
+    // Chave segura gerada automaticamente para HS512 (64 bytes)
+    private final SecretKey secretKey = Keys.secretKeyFor(SignatureAlgorithm.HS512);
     private long expiration = 86400000; // 24 horas
 
     public String generateToken(String username) {
@@ -18,7 +22,7 @@ public class JwtUtil {
                 .setSubject(username)
                 .setIssuedAt(new Date())
                 .setExpiration(new Date(System.currentTimeMillis() + expiration))
-                .signWith(SignatureAlgorithm.HS512, secret)
+                .signWith(secretKey)
                 .compact();
     }
 
@@ -36,7 +40,7 @@ public class JwtUtil {
 
     private Claims getClaims(String token) {
         return Jwts.parser()
-                .setSigningKey(secret)
+                .setSigningKey(secretKey)
                 .parseClaimsJws(token)
                 .getBody();
     }
