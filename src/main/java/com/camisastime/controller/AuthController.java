@@ -9,7 +9,6 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
-import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -19,11 +18,8 @@ import com.camisastime.model.Usuario;
 import com.camisastime.security.JwtUtil;
 import com.camisastime.service.UsuarioService;
 
-import jakarta.validation.Valid;
-
 @RestController
 @RequestMapping("/auth")
-@Validated
 public class AuthController {
 
     @Autowired
@@ -36,17 +32,21 @@ public class AuthController {
     private JwtUtil jwtUtil;
 
     @PostMapping("/login")
-    public ResponseEntity<Map<String, Object>> login(@Valid @RequestBody Usuario usuario) {
+    public ResponseEntity<Map<String, Object>> login(@RequestBody Usuario usuario) {
         try {
-            // Validação básica
+            
             if (usuario.getUsername() == null || usuario.getUsername().trim().isEmpty()) {
-                throw new RuntimeException("Username é obrigatório");
+                Map<String, Object> errorResponse = new HashMap<>();
+                errorResponse.put("error", "Username é obrigatório");
+                return ResponseEntity.badRequest().body(errorResponse);
             }
             if (usuario.getPassword() == null || usuario.getPassword().trim().isEmpty()) {
-                throw new RuntimeException("Password é obrigatório");
+                Map<String, Object> errorResponse = new HashMap<>();
+                errorResponse.put("error", "Password é obrigatório");
+                return ResponseEntity.badRequest().body(errorResponse);
             }
 
-            // Autenticação
+            
             authenticationManager.authenticate(
                     new UsernamePasswordAuthenticationToken(
                             usuario.getUsername().trim(),
@@ -54,7 +54,7 @@ public class AuthController {
                     )
             );
 
-            // Geração do token
+           
             String token = jwtUtil.generateToken(usuario.getUsername().trim());
             
             Map<String, Object> response = new HashMap<>();
@@ -67,40 +67,41 @@ public class AuthController {
         } catch (BadCredentialsException e) {
             Map<String, Object> errorResponse = new HashMap<>();
             errorResponse.put("error", "Credenciais inválidas");
-            errorResponse.put("message", "Username ou password incorretos");
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(errorResponse);
             
         } catch (Exception e) {
             Map<String, Object> errorResponse = new HashMap<>();
-            errorResponse.put("error", "Erro interno");
-            errorResponse.put("message", e.getMessage());
+            errorResponse.put("error", "Erro interno: " + e.getMessage());
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(errorResponse);
         }
     }
 
     @PostMapping("/register")
-    public ResponseEntity<Map<String, Object>> register(@Valid @RequestBody Usuario usuario) {
+    public ResponseEntity<Map<String, Object>> register(@RequestBody Usuario usuario) {
         try {
-            // Validações adicionais
+           
             if (usuario.getUsername() == null || usuario.getUsername().trim().isEmpty()) {
-                throw new RuntimeException("Username é obrigatório");
+                Map<String, Object> errorResponse = new HashMap<>();
+                errorResponse.put("error", "Username é obrigatório");
+                return ResponseEntity.badRequest().body(errorResponse);
             }
             if (usuario.getPassword() == null || usuario.getPassword().trim().isEmpty()) {
-                throw new RuntimeException("Password é obrigatório");
+                Map<String, Object> errorResponse = new HashMap<>();
+                errorResponse.put("error", "Password é obrigatório");
+                return ResponseEntity.badRequest().body(errorResponse);
             }
 
-            // Verificar se username já existe
+            
             if (usuarioService.existsByUsername(usuario.getUsername().trim())) {
                 Map<String, Object> errorResponse = new HashMap<>();
                 errorResponse.put("error", "Username já existe");
-                errorResponse.put("message", "Escolha outro username");
                 return ResponseEntity.status(HttpStatus.CONFLICT).body(errorResponse);
             }
 
-            // Limpar espaços em branco
+            
             usuario.setUsername(usuario.getUsername().trim());
             
-            // Salvar usuário
+          
             Usuario usuarioSalvo = usuarioService.salvar(usuario);
             
             Map<String, Object> response = new HashMap<>();
@@ -112,9 +113,8 @@ public class AuthController {
             
         } catch (Exception e) {
             Map<String, Object> errorResponse = new HashMap<>();
-            errorResponse.put("error", "Erro ao registrar usuário");
-            errorResponse.put("message", e.getMessage());
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(errorResponse);
+            errorResponse.put("error", "Erro ao registrar: " + e.getMessage());
+            return ResponseEntity.badRequest().body(errorResponse);
         }
     }
 }

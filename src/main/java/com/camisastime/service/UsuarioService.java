@@ -2,7 +2,6 @@ package com.camisastime.service;
 
 import java.util.Optional;
 
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.core.userdetails.User;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
@@ -18,11 +17,13 @@ import com.camisastime.repository.UsuarioRepository;
 @Transactional
 public class UsuarioService implements UserDetailsService {
 
-    @Autowired
-    private UsuarioRepository repository;
+    private final UsuarioRepository repository;
+    private final BCryptPasswordEncoder encoder;
 
-    @Autowired
-    private BCryptPasswordEncoder encoder;
+    public UsuarioService(UsuarioRepository repository, BCryptPasswordEncoder encoder) {
+        this.repository = repository;
+        this.encoder = encoder;
+    }
 
     /**
      * Salva um novo usuário com senha criptografada
@@ -53,9 +54,7 @@ public class UsuarioService implements UserDetailsService {
         }
     }
 
-    /**
-     * Verifica se já existe um usuário com o username informado
-     */
+    
     public boolean existsByUsername(String username) {
         if (username == null || username.trim().isEmpty()) {
             return false;
@@ -63,9 +62,7 @@ public class UsuarioService implements UserDetailsService {
         return repository.findByUsername(username.trim()).isPresent();
     }
 
-    /**
-     * Busca usuário por username
-     */
+    
     public Optional<Usuario> findByUsername(String username) {
         if (username == null || username.trim().isEmpty()) {
             return Optional.empty();
@@ -73,9 +70,7 @@ public class UsuarioService implements UserDetailsService {
         return repository.findByUsername(username.trim());
     }
 
-    /**
-     * Implementação do UserDetailsService para autenticação
-     */
+    
     @Override
     public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
         if (username == null || username.trim().isEmpty()) {
@@ -96,9 +91,7 @@ public class UsuarioService implements UserDetailsService {
                 .build();
     }
 
-    /**
-     * Busca usuário por ID
-     */
+    
     public Optional<Usuario> findById(Long id) {
         if (id == null) {
             return Optional.empty();
@@ -106,9 +99,7 @@ public class UsuarioService implements UserDetailsService {
         return repository.findById(id);
     }
 
-    /**
-     * Atualiza senha do usuário
-     */
+    
     public Usuario atualizarSenha(Long id, String novaSenha) {
         if (id == null) {
             throw new RuntimeException("ID do usuário é obrigatório");
@@ -124,9 +115,7 @@ public class UsuarioService implements UserDetailsService {
         return repository.save(usuario);
     }
 
-    /**
-     * Valida se a senha informada confere com a senha do usuário
-     */
+    
     public boolean validarSenha(String username, String senhaInformada) {
         if (username == null || username.trim().isEmpty() || senhaInformada == null) {
             return false;

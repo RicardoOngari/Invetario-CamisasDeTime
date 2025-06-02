@@ -2,7 +2,6 @@ package com.camisastime.security;
 
 import java.io.IOException;
 
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.web.authentication.WebAuthenticationDetailsSource;
@@ -19,10 +18,13 @@ import jakarta.servlet.http.HttpServletResponse;
 @Component
 public class JwtFilter extends OncePerRequestFilter {
 
-    @Autowired
-    private JwtUtil jwtUtil;
-    @Autowired
-    private UsuarioService usuarioService;
+    private final JwtUtil jwtUtil;
+    private final UsuarioService usuarioService;
+
+    public JwtFilter(JwtUtil jwtUtil, UsuarioService usuarioService) {
+        this.jwtUtil = jwtUtil;
+        this.usuarioService = usuarioService;
+    }
 
     @Override
     protected void doFilterInternal(HttpServletRequest request,

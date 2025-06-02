@@ -5,8 +5,6 @@ import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
-import jakarta.validation.constraints.NotBlank;
-import jakarta.validation.constraints.Size;
 
 @Entity
 public class Usuario {
@@ -15,15 +13,12 @@ public class Usuario {
     private Long id;
 
     @Column(unique = true, nullable = false)
-    @NotBlank(message = "Username é obrigatório")
-    @Size(min = 3, max = 50, message = "Username deve ter entre 3 e 50 caracteres")
     private String username;
 
-    @NotBlank(message = "Password é obrigatório")
-    @Size(min = 6, message = "Password deve ter pelo menos 6 caracteres")
+    @Column(nullable = false)
     private String password;
 
-    // Construtores
+    
     public Usuario() {}
 
     public Usuario(String username, String password) {
@@ -31,7 +26,7 @@ public class Usuario {
         this.password = password;
     }
 
-    // Getters e Setters
+    
     public Long getId() {
         return id;
     }
@@ -54,13 +49,5 @@ public class Usuario {
 
     public void setPassword(String password) {
         this.password = password;
-    }
-
-    @Override
-    public String toString() {
-        return "Usuario{" +
-                "id=" + id +
-                ", username='" + username + '\'' +
-                '}';
     }
 }
