@@ -6,3 +6,4 @@ import com.camisastime.model.Movimentacao;
 
 public interface MovimentacaoRepository extends JpaRepository<Movimentacao, Long> {
 }
+

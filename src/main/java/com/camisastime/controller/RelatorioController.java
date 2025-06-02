@@ -5,29 +5,24 @@ import java.util.List;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.camisastime.model.Movimentacao;
+import com.camisastime.service.EstoqueService;
 import com.camisastime.service.MovimentacaoService;
 
 @RestController
-@RequestMapping("/api/movimentacoes")
+@RequestMapping("/api/relatorios")
 @CrossOrigin(origins = "*")
-public class MovimentacaoController {
+public class RelatorioController {
 
     @Autowired
-    private MovimentacaoService service;
+    private MovimentacaoService movimentacaoService;
 
-    @PostMapping
-    public Movimentacao registrar(@RequestBody Movimentacao movimentacao) {
-        return service.registrar(movimentacao);
-    }
+    @Autowired
+    private EstoqueService estoqueService;
 
-    @GetMapping
-    public List<Movimentacao> listar() {
-        return service.listar();
-    }
-}
+    @GetMapping("/movimentacoes")
+    public List<Movimentacao> relatorioMovimentacoes() {
+        

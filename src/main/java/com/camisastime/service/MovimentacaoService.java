@@ -6,10 +6,9 @@ import java.util.List;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import com.camisastime.model.Estoque;
 import com.camisastime.model.Movimentacao;
-import com.camisastime.model.Produto;
 import com.camisastime.repository.MovimentacaoRepository;
-import com.camisastime.repository.ProdutoRepository;
 
 @Service
 public class MovimentacaoService {
@@ -18,33 +17,74 @@ public class MovimentacaoService {
     private MovimentacaoRepository movimentacaoRepository;
 
     @Autowired
-    private ProdutoRepository produtoRepository;
+    private EstoqueService estoqueService;
 
-    public Movimentacao registrarMovimentacao(Movimentacao movimentacao) {
-        Produto produto = produtoRepository.findById(movimentacao.getProduto().getId())
-                .orElseThrow(() -> new RuntimeException("Produto não encontrado"));
-
+    public Movimentacao registrar(Movimentacao movimentacao) {
         movimentacao.setDataHora(LocalDateTime.now());
 
         switch (movimentacao.getTipo().toUpperCase()) {
             case "ENTRADA":
-                produto.setQuantidadeEstoque(produto.getQuantidadeEstoque() + movimentacao.getQuantidade());
+                processarEntrada(movimentacao);
                 break;
             case "SAIDA":
-                if (produto.getQuantidadeEstoque() < movimentacao.getQuantidade()) {
-                    throw new RuntimeException("Estoque insuficiente");
-                }
-                produto.setQuantidadeEstoque(produto.getQuantidadeEstoque() - movimentacao.getQuantidade());
+                processarSaida(movimentacao);
                 break;
             case "TRANSFERENCIA":
-                // Implementar se houver depósitos diferentes
+                processarTransferencia(movimentacao);
                 break;
             default:
-                throw new RuntimeException("Tipo de movimentação inválido");
+                throw new RuntimeException("Tipo inválido");
         }
 
-        produtoRepository.save(produto);
         return movimentacaoRepository.save(movimentacao);
+    }
+
+    private void processarEntrada(Movimentacao mov) {
+        Estoque estoque = estoqueService.buscarPorProdutoEDeposito(
+            mov.getProduto().getId(), 
+            mov.getDepositoDestino().getId()
+        ).orElse(new Estoque(mov.getProduto(), mov.getDepositoDestino(), 0));
+
+        estoque.setQuantidade(estoque.getQuantidade() + mov.getQuantidade());
+        estoqueService.salvar(estoque);
+    }
+
+    private void processarSaida(Movimentacao mov) {
+        Estoque estoque = estoqueService.buscarPorProdutoEDeposito(
+            mov.getProduto().getId(), 
+            mov.getDepositoDestino().getId()
+        ).orElseThrow(() -> new RuntimeException("Produto não encontrado no estoque"));
+
+        if (estoque.getQuantidade() < mov.getQuantidade()) {
+            throw new RuntimeException("Estoque insuficiente");
+        }
+
+        estoque.setQuantidade(estoque.getQuantidade() - mov.getQuantidade());
+        estoqueService.salvar(estoque);
+    }
+
+    private void processarTransferencia(Movimentacao mov) {
+        // Saída do depósito origem
+        Estoque estoqueOrigem = estoqueService.buscarPorProdutoEDeposito(
+            mov.getProduto().getId(), 
+            mov.getDepositoOrigem().getId()
+        ).orElseThrow(() -> new RuntimeException("Produto não encontrado no depósito origem"));
+
+        if (estoqueOrigem.getQuantidade() < mov.getQuantidade()) {
+            throw new RuntimeException("Estoque insuficiente no depósito origem");
+        }
+
+        estoqueOrigem.setQuantidade(estoqueOrigem.getQuantidade() - mov.getQuantidade());
+        estoqueService.salvar(estoqueOrigem);
+
+        // Entrada no depósito destino
+        Estoque estoqueDestino = estoqueService.buscarPorProdutoEDeposito(
+            mov.getProduto().getId(), 
+            mov.getDepositoDestino().getId()
+        ).orElse(new Estoque(mov.getProduto(), mov.getDepositoDestino(), 0));
+
+        estoqueDestino.setQuantidade(estoqueDestino.getQuantidade() + mov.getQuantidade());
+        estoqueService.salvar(estoqueDestino);
     }
 
     public List<Movimentacao> listar() {
