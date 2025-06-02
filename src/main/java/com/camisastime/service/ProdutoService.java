@@ -31,7 +31,22 @@ public class ProdutoService {
         return repository.findByCodigo(codigo);
     }
 
+    public Produto atualizar(Long id, Produto produtoAtualizado) {
+        Produto produto = repository.findById(id)
+            .orElseThrow(() -> new RuntimeException("Produto não encontrado"));
+        
+        produto.setCodigo(produtoAtualizado.getCodigo());
+        produto.setDescricao(produtoAtualizado.getDescricao());
+        produto.setPrecoUnitario(produtoAtualizado.getPrecoUnitario());
+        produto.setUnidadeMedida(produtoAtualizado.getUnidadeMedida());
+        
+        return repository.save(produto);
+    }
+
     public void deletar(Long id) {
+        if (!repository.existsById(id)) {
+            throw new RuntimeException("Produto não encontrado");
+        }
         repository.deleteById(id);
     }
 }
