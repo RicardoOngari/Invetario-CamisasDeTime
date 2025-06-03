@@ -1,9 +1,17 @@
 package com.camisastime.model;
 
+import java.util.ArrayList;
+import java.util.List;
+
+import com.fasterxml.jackson.annotation.JsonManagedReference;
+
+import jakarta.persistence.CascadeType;
 import jakarta.persistence.Entity;
+import jakarta.persistence.FetchType;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
+import jakarta.persistence.OneToMany;
 
 @Entity
 public class Produto {
@@ -15,6 +23,10 @@ public class Produto {
     private String descricao;
     private Double precoUnitario;
     private String unidadeMedida;
+    
+    @OneToMany(mappedBy = "produto", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
+    @JsonManagedReference
+    private List<ImagemProduto> imagens = new ArrayList<>();
 
     // Construtores
     public Produto() {}
@@ -36,4 +48,14 @@ public class Produto {
     public void setPrecoUnitario(Double precoUnitario) { this.precoUnitario = precoUnitario; }
     public String getUnidadeMedida() { return unidadeMedida; }
     public void setUnidadeMedida(String unidadeMedida) { this.unidadeMedida = unidadeMedida; }
+    public List<ImagemProduto> getImagens() { return imagens; }
+    public void setImagens(List<ImagemProduto> imagens) { this.imagens = imagens; }
+    
+    // Método utilitário para obter a imagem principal
+    public ImagemProduto getImagemPrincipal() {
+        return imagens.stream()
+            .filter(ImagemProduto::getPrincipal)
+            .findFirst()
+            .orElse(null);
+    }
 }
